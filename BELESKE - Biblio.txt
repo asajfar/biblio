@@ -1,0 +1,3 @@
+Database: ombudsma_biblioteka
+User: ombudsma_biblioteka
+Password: ApvOmbDtd
