@@ -1,0 +1,225 @@
+/* Svečani Prijemi - Custom Styles */
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Hero section */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: padding-box;
+    border-radius: 15px;
+    color: white;
+    margin: 2rem 0;
+}
+
+.hero-section h1 {
+    color: white !important;
+}
+
+/* Feature cards */
+.feature-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.feature-icon {
+    opacity: 0.8;
+}
+
+/* Reception cards */
+.reception-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.reception-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.reception-stats {
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border-left: 3px solid #007bff;
+}
+
+/* Table cards in seating chart */
+.table-card {
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    transition: border-color 0.3s ease;
+}
+
+.table-card:hover {
+    border-color: #007bff;
+}
+
+.guest-list-small {
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.guest-item-small {
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.85rem;
+}
+
+.guest-item-small:last-child {
+    border-bottom: none;
+}
+
+.guest-name {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+/* Unassigned guests */
+.unassigned-guest {
+    background-color: #fff3cd;
+    border-color: #ffeaa7 !important;
+    transition: background-color 0.3s ease;
+}
+
+.unassigned-guest:hover {
+    background-color: #fff1b8;
+}
+
+/* Statistics */
+.stat-item {
+    padding: 1rem;
+}
+
+.stat-item h4 {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+/* Empty state */
+.empty-state {
+    padding: 3rem 1rem;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 600;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #0056b3, #004085);
+}
+
+/* Forms */
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        margin: 1rem 0;
+        padding: 2rem 1rem !important;
+    }
+    
+    .stat-item {
+        margin-bottom: 1rem;
+    }
+    
+    .guest-list-small {
+        max-height: 80px;
+    }
+}
+
+/* Loading animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Sticky positioning for unassigned guests */
+@media (min-width: 992px) {
+    .sticky-top {
+        top: 1rem !important;
+    }
+}
+
+/* Badge improvements */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+/* Alert improvements */
+.alert {
+    border: none;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    border-left-color: #17a2b8;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-success {
+    border-left-color: #28a745;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}

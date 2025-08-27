@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Kreiranje Prijema - Svečani Prijemi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3><i class="fas fa-plus me-2"></i>Kreiranje Novog Svečanog Prijema</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-glass-cheers me-1"></i>Naziv prijema
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="npr. Svadba Marije i Petara">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="date" class="form-label">
+                            <i class="fas fa-calendar me-1"></i>Datum prijema
+                        </label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="venue" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1"></i>Mesto održavanja
+                        </label>
+                        <input type="text" class="form-control" id="venue" name="venue" required 
+                               placeholder="npr. Hotel Metropol, Sala A">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-info-circle me-1"></i>Opis (opciono)
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Dodatne informacije o prijemu..."></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Otkaži
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Kreiraj Prijem
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

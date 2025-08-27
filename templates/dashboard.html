@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Svečani Prijemi{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt me-2"></i>Moji Svečani Prijemi</h2>
+    <a href="{{ url_for('create_reception') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Novi Prijem
+    </a>
+</div>
+
+{% if receptions %}
+    <div class="row">
+        {% for reception in receptions %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card reception-card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-glass-cheers me-2 text-primary"></i>{{ reception.name }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <i class="fas fa-calendar me-1 text-muted"></i>
+                            <strong>Datum:</strong> {{ reception.date.strftime('%d.%m.%Y') }}
+                        </p>
+                        <p class="card-text">
+                            <i class="fas fa-map-marker-alt me-1 text-muted"></i>
+                            <strong>Mesto:</strong> {{ reception.venue }}
+                        </p>
+                        {% if reception.description %}
+                            <p class="card-text">
+                                <i class="fas fa-info-circle me-1 text-muted"></i>
+                                {{ reception.description[:100] }}{% if reception.description|length > 100 %}...{% endif %}
+                            </p>
+                        {% endif %}
+                        
+                        <div class="reception-stats mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-table me-1"></i>{{ reception.tables|length }} stolova |
+                                <i class="fas fa-users me-1"></i>{{ reception.guests|length }} gostiju
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="btn-group w-100">
+                            <a href="{{ url_for('reception_detail', id=reception.id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i>Upravljaj
+                            </a>
+                            <a href="{{ url_for('seating_chart', id=reception.id) }}" class="btn btn-primary">
+                                <i class="fas fa-chart-pie me-1"></i>Raspored
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <div class="empty-state">
+            <i class="fas fa-glass-cheers fa-5x text-muted mb-4"></i>
+            <h3 class="text-muted">Još nema svečanih prijema</h3>
+            <p class="text-muted mb-4">Kreirajte svoj prvi svečani prijem da biste počeli sa organizovanjem.</p>
+            <a href="{{ url_for('create_reception') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Kreiraj Prvi Prijem
+            </a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
