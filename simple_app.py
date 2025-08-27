@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import sqlite3
 import bcrypt
+import secrets
 from datetime import datetime
 import os
 
@@ -38,6 +39,8 @@ def init_database():
             venue TEXT NOT NULL,
             description TEXT,
             user_id INTEGER NOT NULL,
+            public_id TEXT UNIQUE,
+            is_public INTEGER DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
@@ -165,10 +168,13 @@ def create_reception():
         venue = request.form['venue']
         description = request.form.get('description', '')
         
+        # Generiši javni ID za prijem
+        public_id = secrets.token_urlsafe(16)
+        
         conn = get_db_connection()
         cursor = conn.execute(
-            'INSERT INTO receptions (name, date, venue, description, user_id) VALUES (?, ?, ?, ?, ?)',
-            (name, date, venue, description, session['user_id'])
+            'INSERT INTO receptions (name, date, venue, description, user_id, public_id) VALUES (?, ?, ?, ?, ?, ?)',
+            (name, date, venue, description, session['user_id'], public_id)
         )
         reception_id = cursor.lastrowid
         conn.commit()
@@ -384,6 +390,115 @@ def move_guest():
     conn.close()
     
     return redirect(url_for('seating_chart', id=guest['reception_id']))
+
+@app.route('/public/<public_id>')
+def public_seating_chart(public_id):
+    """Javna stranica za pregled rasporeda sedenja"""
+    conn = get_db_connection()
+    
+    # Pronađi prijem po javnom ID-ju
+    reception = conn.execute(
+        'SELECT * FROM receptions WHERE public_id = ? AND is_public = 1',
+        (public_id,)
+    ).fetchone()
+    
+    if not reception:
+        conn.close()
+        return render_template('public_not_found.html'), 404
+    
+    # Uzmi stolove sa gostima
+    tables = conn.execute(
+        'SELECT * FROM tables WHERE reception_id = ? ORDER BY number',
+        (reception['id'],)
+    ).fetchall()
+    
+    tables_with_guests = []
+    for table in tables:
+        guests = conn.execute(
+            'SELECT * FROM guests WHERE table_id = ? ORDER BY name',
+            (table['id'],)
+        ).fetchall()
+        
+        tables_with_guests.append({
+            'id': table['id'],
+            'number': table['number'],
+            'capacity': table['capacity'],
+            'guests': guests
+        })
+    
+    # Svi gosti za pretragu
+    all_guests = conn.execute(
+        '''SELECT g.*, t.number as table_number FROM guests g 
+           LEFT JOIN tables t ON g.table_id = t.id 
+           WHERE g.reception_id = ? ORDER BY g.name''',
+        (reception['id'],)
+    ).fetchall()
+    
+    conn.close()
+    
+    return render_template('public_seating_chart.html', 
+                         reception=reception,
+                         tables=tables_with_guests,
+                         all_guests=all_guests)
+
+@app.route('/reception/<int:id>/toggle_public', methods=['POST'])
+def toggle_public_access(id):
+    """Uključi/isključi javni pristup prijemu"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    reception = conn.execute(
+        'SELECT * FROM receptions WHERE id = ? AND user_id = ?',
+        (id, session['user_id'])
+    ).fetchone()
+    
+    if not reception:
+        flash('Nemate dozvolu!', 'danger')
+        conn.close()
+        return redirect(url_for('index'))
+    
+    # Uključi/isključi javni pristup
+    new_status = 1 if not reception['is_public'] else 0
+    conn.execute(
+        'UPDATE receptions SET is_public = ? WHERE id = ?',
+        (new_status, id)
+    )
+    conn.commit()
+    conn.close()
+    
+    if new_status:
+        flash('Javni pristup je uključen! Gosti mogu pristupiti rasporedu.', 'success')
+    else:
+        flash('Javni pristup je isključen.', 'info')
+    
+    return redirect(url_for('reception_detail', id=id))
+
+@app.route('/reception/<int:id>/public_link')
+def get_public_link(id):
+    """Dobij javni link za prijem"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    reception = conn.execute(
+        'SELECT * FROM receptions WHERE id = ? AND user_id = ?',
+        (id, session['user_id'])
+    ).fetchone()
+    
+    conn.close()
+    
+    if not reception:
+        flash('Nemate dozvolu!', 'danger')
+        return redirect(url_for('index'))
+    
+    public_url = url_for('public_seating_chart', public_id=reception['public_id'], _external=True)
+    
+    return render_template('public_link.html', 
+                         reception=reception,
+                         public_url=public_url)
 
 if __name__ == '__main__':
     init_database()
