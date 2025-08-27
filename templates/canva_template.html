@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Canva Template - {{ reception['name'] }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-gradient text-white text-center" style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                <h3><i class="fas fa-palette me-2"></i>Canva Integracija</h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h4 class="text-primary">{{ reception['name'] }}</h4>
+                    <p class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>{{ reception['date'] }} | 
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ reception['venue'] }}
+                    </p>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-magic me-1"></i>Automatski Template</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">Kreiraćemo Canva template sa vašim podacima.</p>
+                                <a href="https://www.canva.com/design/play?category=tACZCki4tbY&type=TAB7AVWWlT0" 
+                                   target="_blank" 
+                                   class="btn btn-primary btn-block"
+                                   onclick="openCanvaWithData()">
+                                    <i class="fas fa-external-link-alt me-1"></i>Otvori Canva Template
+                                </a>
+                                <small class="text-muted d-block mt-2">
+                                    Otvorit će se prazan template koji možete prilagoditi
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0"><i class="fas fa-copy me-1"></i>Kopiraj Podatke</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">Kopirajte podatke i unesite ručno u Canva.</p>
+                                <button class="btn btn-success btn-block" onclick="copyDataToClipboard()">
+                                    <i class="fas fa-clipboard me-1"></i>Kopiraj Tekst
+                                </button>
+                                <small class="text-muted d-block mt-2">
+                                    Tekst će biti kopiran u clipboard
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pregled podataka za kopiranje -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-eye me-1"></i>Podaci za Template</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Osnovne Informacije:</h6>
+                                <div id="basicInfo">
+                                    <p><strong>Naziv:</strong> {{ reception['name'] }}</p>
+                                    <p><strong>Datum:</strong> {{ reception['date'] }}</p>
+                                    <p><strong>Mesto:</strong> {{ reception['venue'] }}</p>
+                                    {% if reception['description'] %}
+                                        <p><strong>Opis:</strong> {{ reception['description'] }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary">Statistike:</h6>
+                                <p><strong>Broj stolova:</strong> {{ tables|length }}</p>
+                                <p><strong>Ukupna kapacitat:</strong> {{ tables|sum(attribute='capacity') }}</p>
+                            </div>
+                        </div>
+                        
+                        <h6 class="text-primary mt-4">Raspored po Stolovima:</h6>
+                        <div id="tableData" class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Stol</th>
+                                        <th>Gosti</th>
+                                        <th>Kapacitat</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for table in tables %}
+                                        <tr>
+                                            <td><strong>Stol {{ table['number'] }}</strong></td>
+                                            <td>
+                                                {% set table_guests = [] %}
+                                                {% for guest in guests if guest['table_id'] == table['id'] %}
+                                                    {% set _ = table_guests.append(guest['name']) %}
+                                                {% endfor %}
+                                                {% if table_guests %}
+                                                    {{ table_guests|join(', ') }}
+                                                {% else %}
+                                                    <em class="text-muted">Nema gostiju</em>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ table['capacity'] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canva template preporuke -->
+                <div class="alert alert-info mt-4">
+                    <h6><i class="fas fa-lightbulb me-1"></i>Preporuke za Canva Design:</h6>
+                    <ul class="mb-0">
+                        <li>Koristite <strong>Poster</strong> ili <strong>Flyer</strong> format (A4 ili veći)</li>
+                        <li>Dodajte elegantnu pozadinu (gradient, pattern ili sliku)</li>
+                        <li>Koristite kontrastan tekst za bolje čitanje</li>
+                        <li>Grupisajte stolove u jasno organizovane sekcije</li>
+                        <li>Dodajte ikone ili dekorativne elemente za lepši izgled</li>
+                        <li>Ostavite dovoljno belog prostora oko teksta</li>
+                    </ul>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('reception_detail', id=reception['id']) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Nazad na Upravljanje
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Podaci za kopiranje
+const receptionData = {
+    name: "{{ reception['name'] }}",
+    date: "{{ reception['date'] }}",
+    venue: "{{ reception['venue'] }}",
+    description: "{{ reception['description'] or '' }}",
+    tables: [
+        {% for table in tables %}
+        {
+            number: {{ table['number'] }},
+            capacity: {{ table['capacity'] }},
+            guests: [
+                // Ovde bi trebalo da se popuni iz backend-a
+            ]
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+};
+
+function copyDataToClipboard() {
+    let text = `SVEČANI PRIJEM: ${receptionData.name}\n`;
+    text += `DATUM: ${receptionData.date}\n`;
+    text += `MESTO: ${receptionData.venue}\n`;
+    if (receptionData.description) {
+        text += `OPIS: ${receptionData.description}\n`;
+    }
+    text += `\n=== RASPORED STOLOVA ===\n\n`;
+    
+    // Dodaj podatke o stolovima iz tabele
+    const tableRows = document.querySelectorAll('#tableData tbody tr');
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const tableNum = cells[0].textContent.trim();
+        const guests = cells[1].textContent.trim();
+        const capacity = cells[2].textContent.trim();
+        
+        text += `${tableNum} (${capacity} mesta):\n`;
+        if (guests && !guests.includes('Nema gostiju')) {
+            text += `${guests}\n\n`;
+        } else {
+            text += `(Prazan stol)\n\n`;
+        }
+    });
+    
+    text += `\n--- Kreano pomoću aplikacije Svečani Prijemi ---`;
+    
+    // Kopiraj u clipboard
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Podaci su kopirani u clipboard!', 'success');
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showToast('Podaci su kopirani u clipboard!', 'success');
+        } else {
+            showToast('Greška pri kopiranju. Molimo vas da ručno selektujete tekst.', 'warning');
+        }
+    } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+        showToast('Greška pri kopiranju. Molimo vas da ručno selektujete tekst.', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function openCanvaWithData() {
+    // Osnovni Canva template link
+    let canvaUrl = 'https://www.canva.com/design/play?category=tACZCki4tbY&type=TAB7AVWWlT0';
+    
+    // Otvori u novom tabu
+    window.open(canvaUrl, '_blank');
+    
+    // Prikaži instrukcije
+    setTimeout(() => {
+        showToast('Canva je otvoren! Kopirajte podatke doleže i unesite ih u template.', 'info');
+    }, 1000);
+}
+
+function showToast(message, type = 'info') {
+    // Kreiranje toast notifikacije
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+    toast.style.minWidth = '300px';
+    
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-ukloni nakon 5 sekundi
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

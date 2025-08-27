@@ -11,6 +11,9 @@ Kompletna aplikacija za upravljanje svečanim prizemima i rasporedom mesta za go
 - 📊 **Pregled rasporeda mesta po stolovima**
 - 🌐 **Javna stranica za goste sa pretragom**
 - 🔗 **Deljenje javnog linka sa gostima**
+- 🎨 **Generisanje slika rasporeda sedenja**
+- 📱 **QR kodovi za brz pristup**
+- 🎨 **Canva integracija za kreiranje vizuelnih materijala**
 - 📱 **Responzivni dizajn za sve uređaje**
 
 ## Instalacija i pokretanje
@@ -88,11 +91,17 @@ python simple_app.py
 - Podelite link sa gostima
 - Gosti mogu da pretražuju svoja imena i vide na kom stolu sede
 
-### 7. Deljenje sa gostima
+### 7. Generisanje slika i materijala
+- Automatsko kreiranje PNG slika rasporeda
+- QR kodovi za javnu stranicu
+- Canva template integracija
+- Download funkcionalnost za goste
+
+### 8. Deljenje sa gostima
 - Email integracija za slanje linkova
 - WhatsApp deljenje
 - Kopiranje linka u clipboard
-- QR kod generisanje (opciono)
+- QR kod generisanje
 
 ## Struktura aplikacije
 
@@ -112,7 +121,8 @@ svecani-prijemi/
 │   ├── seating_chart.html
 │   ├── public_seating_chart.html  # Javna stranica za goste
 │   ├── public_not_found.html      # Greška stranica
-│   └── public_link.html           # Upravljanje javnim linkom
+│   ├── public_link.html           # Upravljanje javnim linkom
+│   └── canva_template.html        # Canva integracija
 └── static/              # Statički fajlovi
     ├── css/
     │   └── style.css

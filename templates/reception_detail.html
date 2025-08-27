@@ -18,6 +18,23 @@
         <a href="{{ url_for('get_public_link', id=reception['id']) }}" class="btn btn-info">
             <i class="fas fa-share-alt me-1"></i>Javni Link
         </a>
+        <div class="btn-group">
+            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-image me-1"></i>Generiši Sliku
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('generate_image', id=reception['id']) }}">
+                    <i class="fas fa-download me-1"></i>Preuzmi PNG sliku
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('generate_qr_image', id=reception['id']) }}">
+                    <i class="fas fa-qrcode me-1"></i>Preuzmi QR kod
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ url_for('canva_template', id=reception['id']) }}" target="_blank">
+                    <i class="fas fa-palette me-1"></i>Otvori u Canva
+                </a></li>
+            </ul>
+        </div>
     </div>
 </div>
 

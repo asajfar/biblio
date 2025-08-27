@@ -89,6 +89,13 @@
             {% if reception.description %}
                 <p class="mt-3 text-muted">{{ reception.description }}</p>
             {% endif %}
+            
+            <!-- Dugme za download slike -->
+            <div class="mt-3">
+                <button onclick="downloadAsImage()" class="btn btn-light btn-sm">
+                    <i class="fas fa-download me-1"></i>Preuzmi kao Sliku
+                </button>
+            </div>
         </div>
 
         <!-- Guest Search -->
@@ -308,6 +315,63 @@
                 }, index * 100);
             });
         });
+
+        // Download page as image functionality
+        function downloadAsImage() {
+            // Import html2canvas library
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                script.onload = function() {
+                    captureAndDownload();
+                };
+                document.head.appendChild(script);
+            } else {
+                captureAndDownload();
+            }
+        }
+
+        function captureAndDownload() {
+            const button = document.querySelector('button[onclick="downloadAsImage()"]');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generisanje...';
+            button.disabled = true;
+
+            // Hide search results temporarily
+            const searchResults = document.getElementById('searchResults');
+            const originalDisplay = searchResults.style.display;
+            searchResults.style.display = 'none';
+
+            html2canvas(document.body, {
+                backgroundColor: null,
+                scale: 1,
+                logging: false,
+                allowTaint: false,
+                useCORS: true
+            }).then(function(canvas) {
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `raspored_sedenja_{{ reception.name|replace(' ', '_') }}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                // Restore button
+                button.innerHTML = '<i class="fas fa-download me-1"></i>Preuzmi kao Sliku';
+                button.disabled = false;
+
+                // Restore search results
+                searchResults.style.display = originalDisplay;
+            }).catch(function(error) {
+                console.error('Error generating image:', error);
+                alert('Greška pri generisanju slike. Molimo vas pokušajte ponovo.');
+                
+                // Restore button
+                button.innerHTML = '<i class="fas fa-download me-1"></i>Preuzmi kao Sliku';
+                button.disabled = false;
+
+                // Restore search results
+                searchResults.style.display = originalDisplay;
+            });
+        }
     </script>
 </body>
 </html>

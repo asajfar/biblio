@@ -1,9 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 import sqlite3
 import bcrypt
 import secrets
 from datetime import datetime
 import os
+from PIL import Image, ImageDraw, ImageFont
+import qrcode
+import io
+import math
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-change-this'
@@ -81,6 +85,168 @@ def hash_password(password):
 def check_password(password, hashed):
     """Proverava lozinku"""
     return bcrypt.checkpw(password.encode('utf-8'), hashed)
+
+def create_gradient_background(width, height, color1=(135, 206, 235), color2=(25, 25, 112)):
+    """Kreiranje gradient pozadine"""
+    image = Image.new('RGB', (width, height))
+    draw = ImageDraw.Draw(image)
+    
+    for y in range(height):
+        # Interpolacija između boja
+        ratio = y / height
+        r = int(color1[0] * (1 - ratio) + color2[0] * ratio)
+        g = int(color1[1] * (1 - ratio) + color2[1] * ratio)
+        b = int(color1[2] * (1 - ratio) + color2[2] * ratio)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+    
+    return image
+
+def get_font(size):
+    """Dobij font ili koristi default"""
+    try:
+        # Pokušaj da učitaš sistemski font
+        return ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size)
+    except:
+        try:
+            return ImageFont.truetype("arial.ttf", size)
+        except:
+            return ImageFont.load_default()
+
+def generate_seating_chart_image(reception_data, tables_data):
+    """Generiši sliku rasporeda sedenja"""
+    
+    # Dimenzije slike
+    width, height = 1200, 1600
+    
+    # Kreiranje pozadine
+    img = create_gradient_background(width, height, (240, 248, 255), (100, 149, 237))
+    draw = ImageDraw.Draw(img)
+    
+    # Dodavanje dekorativnih elemenata
+    # Zvezde ili tačke na pozadini
+    for i in range(50):
+        x = secrets.randbelow(width)
+        y = secrets.randbelow(height)
+        draw.ellipse([x-2, y-2, x+2, y+2], fill=(255, 255, 255, 100))
+    
+    # Header sa informacijama o prijemu
+    header_height = 200
+    
+    # Naslov
+    title_font = get_font(48)
+    title = reception_data['name']
+    title_bbox = draw.textbbox((0, 0), title, font=title_font)
+    title_width = title_bbox[2] - title_bbox[0]
+    draw.text(((width - title_width) // 2, 30), title, fill='white', font=title_font)
+    
+    # Datum i mesto
+    info_font = get_font(24)
+    date_text = f"📅 {reception_data['date']}"
+    venue_text = f"📍 {reception_data['venue']}"
+    
+    date_bbox = draw.textbbox((0, 0), date_text, font=info_font)
+    venue_bbox = draw.textbbox((0, 0), venue_text, font=info_font)
+    
+    date_width = date_bbox[2] - date_bbox[0]
+    venue_width = venue_bbox[2] - venue_bbox[0]
+    
+    draw.text(((width - date_width) // 2, 100), date_text, fill='white', font=info_font)
+    draw.text(((width - venue_width) // 2, 135), venue_text, fill='white', font=info_font)
+    
+    # Linija za separaciju
+    draw.line([(50, header_height - 20), (width - 50, header_height - 20)], fill='white', width=3)
+    
+    # Raspored stolova
+    current_y = header_height + 20
+    table_font = get_font(20)
+    guest_font = get_font(16)
+    
+    # Sortiraj stolove po brojovima
+    sorted_tables = sorted(tables_data, key=lambda t: t['number'])
+    
+    # Podeli stolove u kolone
+    tables_per_column = 3
+    column_width = width // 2
+    
+    for i, table in enumerate(sorted_tables):
+        # Računaj poziciju
+        column = i % 2
+        row = i // 2
+        
+        x_start = 50 + (column * column_width)
+        y_start = current_y + (row * 200)
+        
+        # Pozadina za stol
+        table_bg_color = (255, 255, 255, 220)
+        table_rect = [x_start, y_start, x_start + column_width - 100, y_start + 180]
+        
+        # Skrugli uglove za lepši izgled
+        draw.rounded_rectangle(table_rect, radius=15, fill=table_bg_color)
+        draw.rounded_rectangle(table_rect, radius=15, outline=(70, 130, 180), width=2)
+        
+        # Naslov stola
+        table_title = f"🪑 STOL {table['number']}"
+        capacity_info = f"({len(table['guests'])}/{table['capacity']} mesta)"
+        
+        table_title_bbox = draw.textbbox((0, 0), table_title, font=table_font)
+        table_title_width = table_title_bbox[2] - table_title_bbox[0]
+        
+        # Pozicioniraj naslov stola
+        title_x = x_start + (column_width - 100 - table_title_width) // 2
+        draw.text((title_x, y_start + 10), table_title, fill=(25, 25, 112), font=table_font)
+        
+        capacity_bbox = draw.textbbox((0, 0), capacity_info, font=guest_font)
+        capacity_width = capacity_bbox[2] - capacity_bbox[0]
+        capacity_x = x_start + (column_width - 100 - capacity_width) // 2
+        draw.text((capacity_x, y_start + 35), capacity_info, fill=(70, 130, 180), font=guest_font)
+        
+        # Lista gostiju
+        guest_y = y_start + 65
+        if table['guests']:
+            for j, guest in enumerate(table['guests'][:8]):  # Max 8 gostiju po stolu
+                guest_text = f"• {guest['name']}"
+                draw.text((x_start + 15, guest_y), guest_text, fill=(25, 25, 112), font=guest_font)
+                guest_y += 20
+                
+            if len(table['guests']) > 8:
+                draw.text((x_start + 15, guest_y), f"... i još {len(table['guests']) - 8} gostiju", 
+                         fill=(128, 128, 128), font=guest_font)
+        else:
+            draw.text((x_start + 15, guest_y), "Nema gostiju", fill=(128, 128, 128), font=guest_font)
+    
+    # Footer sa dodatnim informacijama
+    footer_y = height - 100
+    footer_font = get_font(18)
+    total_guests = sum(len(table['guests']) for table in tables_data)
+    total_capacity = sum(table['capacity'] for table in tables_data)
+    
+    stats_text = f"📊 Ukupno: {total_guests}/{total_capacity} gostiju • {len(tables_data)} stolova"
+    stats_bbox = draw.textbbox((0, 0), stats_text, font=footer_font)
+    stats_width = stats_bbox[2] - stats_bbox[0]
+    draw.text(((width - stats_width) // 2, footer_y), stats_text, fill='white', font=footer_font)
+    
+    # Dodaj watermark
+    watermark_text = "Kreano sa ❤️ - Svečani Prijemi"
+    watermark_font = get_font(14)
+    watermark_bbox = draw.textbbox((0, 0), watermark_text, font=watermark_font)
+    watermark_width = watermark_bbox[2] - watermark_bbox[0]
+    draw.text(((width - watermark_width) // 2, height - 30), watermark_text, 
+             fill=(255, 255, 255, 150), font=watermark_font)
+    
+    return img
+
+def generate_qr_code(url):
+    """Generiši QR kod za javni link"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    
+    return qr.make_image(fill_color="black", back_color="white")
 
 @app.route('/')
 def index():
@@ -499,6 +665,144 @@ def get_public_link(id):
     return render_template('public_link.html', 
                          reception=reception,
                          public_url=public_url)
+
+@app.route('/reception/<int:id>/generate_image')
+def generate_image(id):
+    """Generiši sliku rasporeda sedenja"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    # Proveri vlasništvo
+    reception = conn.execute(
+        'SELECT * FROM receptions WHERE id = ? AND user_id = ?',
+        (id, session['user_id'])
+    ).fetchone()
+    
+    if not reception:
+        flash('Nemate dozvolu!', 'danger')
+        conn.close()
+        return redirect(url_for('index'))
+    
+    # Uzmi stolove sa gostima
+    tables = conn.execute(
+        'SELECT * FROM tables WHERE reception_id = ? ORDER BY number',
+        (id,)
+    ).fetchall()
+    
+    tables_with_guests = []
+    for table in tables:
+        guests = conn.execute(
+            'SELECT * FROM guests WHERE table_id = ? ORDER BY name',
+            (table['id'],)
+        ).fetchall()
+        
+        tables_with_guests.append({
+            'id': table['id'],
+            'number': table['number'],
+            'capacity': table['capacity'],
+            'guests': guests
+        })
+    
+    conn.close()
+    
+    # Generiši sliku
+    try:
+        img = generate_seating_chart_image(reception, tables_with_guests)
+        
+        # Sačuvaj sliku u memoriji
+        img_io = io.BytesIO()
+        img.save(img_io, 'PNG', quality=95)
+        img_io.seek(0)
+        
+        filename = f"raspored_{reception['name'].replace(' ', '_')}_{reception['date']}.png"
+        
+        return send_file(
+            img_io,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        flash(f'Greška pri generisanju slike: {str(e)}', 'danger')
+        return redirect(url_for('reception_detail', id=id))
+
+@app.route('/reception/<int:id>/generate_qr')
+def generate_qr_image(id):
+    """Generiši QR kod za javni link"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    reception = conn.execute(
+        'SELECT * FROM receptions WHERE id = ? AND user_id = ?',
+        (id, session['user_id'])
+    ).fetchone()
+    
+    conn.close()
+    
+    if not reception:
+        flash('Nemate dozvolu!', 'danger')
+        return redirect(url_for('index'))
+    
+    if not reception['is_public']:
+        flash('Javni pristup mora biti uključen za QR kod!', 'warning')
+        return redirect(url_for('reception_detail', id=id))
+    
+    try:
+        public_url = url_for('public_seating_chart', public_id=reception['public_id'], _external=True)
+        qr_img = generate_qr_code(public_url)
+        
+        # Sačuvaj QR kod u memoriji
+        img_io = io.BytesIO()
+        qr_img.save(img_io, 'PNG')
+        img_io.seek(0)
+        
+        filename = f"qr_kod_{reception['name'].replace(' ', '_')}.png"
+        
+        return send_file(
+            img_io,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        flash(f'Greška pri generisanju QR koda: {str(e)}', 'danger')
+        return redirect(url_for('reception_detail', id=id))
+
+@app.route('/reception/<int:id>/canva_template')
+def canva_template(id):
+    """Preusmeri na Canva sa parametrima"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    
+    reception = conn.execute(
+        'SELECT * FROM receptions WHERE id = ? AND user_id = ?',
+        (id, session['user_id'])
+    ).fetchone()
+    
+    if not reception:
+        flash('Nemate dozvolu!', 'danger')
+        conn.close()
+        return redirect(url_for('index'))
+    
+    # Pripremi podatke za Canva template
+    tables = conn.execute(
+        'SELECT * FROM tables WHERE reception_id = ? ORDER BY number',
+        (id,)
+    ).fetchall()
+    
+    conn.close()
+    
+    return render_template('canva_template.html', 
+                         reception=reception,
+                         tables=tables)
 
 if __name__ == '__main__':
     init_database()
