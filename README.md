@@ -18,43 +18,107 @@ Kompletna aplikacija za upravljanje svečanim prizemima i rasporedom mesta za go
 
 ## Instalacija i pokretanje
 
-### 1. Klonirajte repozitorijum ili preuzmite fajlove
+### Opcija 1: Sa Docker-om (Preporučeno)
 
+#### 1. Instalirajte Docker i Docker Compose
 ```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install docker.io docker-compose
+
+# Ili preuzmite sa docker.com
+```
+
+#### 2. Pokrenite MySQL sa Docker-om
+```bash
+# Klonirajte repozitorijum
 git clone <repository-url>
 cd svecani-prijemi
+
+# Pokrenite MySQL i phpMyAdmin
+docker-compose up -d
+
+# Proverite da li su kontejneri pokrenuti
+docker-compose ps
 ```
 
-### 2. Kreirajte virtuelno okruženje (preporučeno)
-
-```bash
-python -m venv venv
-
-# Na Windows:
-venv\Scripts\activate
-
-# Na Linux/Mac:
-source venv/bin/activate
-```
-
-### 3. Instalirajte potrebne pakete
-
+#### 3. Instalirajte Python zavisnosti
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Pokrenite aplikaciju
+#### 4. Pokrenite aplikaciju
+```bash
+python mysql_app.py
+```
+
+### Opcija 2: Sa lokalnim MySQL-om
+
+#### 1. Instalirajte MySQL
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install mysql-server
+
+# CentOS/RHEL
+sudo yum install mysql-server
+
+# macOS
+brew install mysql
+```
+
+#### 2. Konfigurirajte MySQL
+```bash
+# Pokrenite MySQL
+sudo systemctl start mysql
+
+# Bezbednosno podešavanje
+sudo mysql_secure_installation
+
+# Prijavite se kao root
+mysql -u root -p
+
+# Pokrenite setup script
+mysql -u root -p < mysql_setup.sql
+```
+
+#### 3. Kreirajte environment fajl
+```bash
+cp .env.example .env
+# Uredite .env fajl sa vašim MySQL podacima
+```
+
+#### 4. Instalirajte Python zavisnosti
+```bash
+pip install -r requirements.txt
+```
+
+#### 5. Pokrenite aplikaciju
+```bash
+python mysql_app.py
+```
+
+### Opcija 3: Sa SQLite (Jednostavna)
 
 ```bash
+pip install --break-system-packages Flask bcrypt Pillow qrcode
 python simple_app.py
 ```
 
-Aplikacija će biti dostupna na `http://localhost:5000`
+## Pristup aplikaciji
 
-**Napomena:** Ako imate problema sa kompatibilnošću paketa, koristite:
+- **Web aplikacija**: `http://localhost:5000`
+- **phpMyAdmin** (ako koristite Docker): `http://localhost:8080`
+
+## MySQL konfiguracija
+
 ```bash
-pip install --break-system-packages Flask bcrypt
-python simple_app.py
+# Default podaci za Docker
+Host: localhost
+Port: 3306
+Database: svecani_prijemi
+Username: svecani_prijemi
+Password: password123
 ```
 
 ## Korišćenje
@@ -107,10 +171,14 @@ python simple_app.py
 
 ```
 svecani-prijemi/
-├── simple_app.py          # Glavna Flask aplikacija
-├── requirements.txt       # Python zavisnosti
-├── README.md             # Dokumentacija
-├── templates/            # HTML šabloni
+├── mysql_app.py          # MySQL Flask aplikacija (GLAVNA)
+├── simple_app.py         # SQLite Flask aplikacija (backup)
+├── requirements.txt      # Python zavisnosti
+├── README.md            # Dokumentacija
+├── .env.example         # Environment varijable
+├── mysql_setup.sql      # MySQL setup script
+├── docker-compose.yml   # Docker konfiguracija
+├── templates/           # HTML šabloni
 │   ├── base.html
 │   ├── index.html
 │   ├── login.html
@@ -130,21 +198,56 @@ svecani-prijemi/
         └── script.js
 ```
 
-## Database modeli
+## Database modeli (MySQL)
 
-- **users**: Korisnici aplikacije (id, username, email, password_hash)
-- **receptions**: Svečani prijemi (id, name, date, venue, description, user_id, public_id, is_public)
-- **tables**: Stolovi u sali (id, number, capacity, reception_id)
-- **guests**: Gosti na prijemu (id, name, phone, email, notes, reception_id, table_id)
+### users
+- `id` INT AUTO_INCREMENT PRIMARY KEY
+- `username` VARCHAR(80) UNIQUE NOT NULL
+- `email` VARCHAR(120) UNIQUE NOT NULL  
+- `password_hash` VARCHAR(255) NOT NULL
+- `date_created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+### receptions
+- `id` INT AUTO_INCREMENT PRIMARY KEY
+- `name` VARCHAR(200) NOT NULL
+- `date` DATE NOT NULL
+- `venue` VARCHAR(200) NOT NULL
+- `description` TEXT
+- `user_id` INT NOT NULL (FK)
+- `public_id` VARCHAR(100) UNIQUE
+- `is_public` BOOLEAN DEFAULT FALSE
+- `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+- `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+### tables
+- `id` INT AUTO_INCREMENT PRIMARY KEY
+- `number` INT NOT NULL
+- `capacity` INT NOT NULL DEFAULT 8
+- `reception_id` INT NOT NULL (FK)
+- `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+- UNIQUE constraint na (reception_id, number)
+
+### guests
+- `id` INT AUTO_INCREMENT PRIMARY KEY
+- `name` VARCHAR(200) NOT NULL
+- `phone` VARCHAR(20)
+- `email` VARCHAR(120)
+- `notes` TEXT
+- `reception_id` INT NOT NULL (FK)
+- `table_id` INT NULL (FK)
+- `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+- `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
 ## Tehnologije
 
 - **Backend**: Python Flask
-- **Database**: SQLite (direktni pristup)
+- **Database**: MySQL 8.0 (PyMySQL connector)
+- **Container**: Docker & Docker Compose
 - **Frontend**: HTML5, CSS3, JavaScript
 - **UI Framework**: Bootstrap 5
 - **Icons**: Font Awesome 6
 - **Security**: bcrypt za hash-ovanje lozinki
+- **Image Generation**: PIL/Pillow, QRCode
 
 ## Sigurnost
 

@@ -140,17 +140,39 @@ svecani-prijemi/
 
 ## 🚀 Pokretanje Aplikacije
 
-1. **Instaliraj zavisnosti**:
+### Sa MySQL (Preporučeno za produkciju)
+
+1. **Docker setup** (Najlakši način):
    ```bash
-   pip install --break-system-packages Flask bcrypt Pillow qrcode
+   docker-compose up -d
+   pip install -r requirements.txt
+   python mysql_app.py
    ```
 
-2. **Pokreni aplikaciju**:
+2. **Lokalni MySQL**:
    ```bash
+   # Instaliraj MySQL i pokreni setup script
+   mysql -u root -p < mysql_setup.sql
+   
+   # Kopiraj environment
+   cp .env.example .env
+   
+   # Instaliraj Python pakete
+   pip install -r requirements.txt
+   
+   # Pokreni aplikaciju
+   python mysql_app.py
+   ```
+
+### Sa SQLite (Brzo testiranje)
+
+1. **Jednostavan setup**:
+   ```bash
+   pip install --break-system-packages Flask bcrypt Pillow qrcode
    python simple_app.py
    ```
 
-3. **Otvori u browseru**: `http://localhost:5000`
+**Pristup aplikaciji**: `http://localhost:5000`
 
 ## 🎯 Tipične Use Case Scenarios
 
