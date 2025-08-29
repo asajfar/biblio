@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}{{ reception['name'] }} - Svečani Prijemi{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-glass-cheers me-2"></i>{{ reception['name'] }}</h2>
+        <p class="text-muted mb-0">
+            <i class="fas fa-calendar me-1"></i>{{ reception['date'] }} | 
+            <i class="fas fa-map-marker-alt me-1"></i>{{ reception['venue'] }}
+        </p>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('seating_chart', id=reception['id']) }}" class="btn btn-primary">
+            <i class="fas fa-chart-pie me-1"></i>Pregled Rasporeda
+        </a>
+        <a href="{{ url_for('get_public_link', id=reception['id']) }}" class="btn btn-info">
+            <i class="fas fa-share-alt me-1"></i>Javni Link
+        </a>
+        <div class="btn-group">
+            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-image me-1"></i>Generiši Sliku
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('generate_image', id=reception['id']) }}">
+                    <i class="fas fa-download me-1"></i>Preuzmi PNG sliku
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('generate_qr_image', id=reception['id']) }}">
+                    <i class="fas fa-qrcode me-1"></i>Preuzmi QR kod
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ url_for('canva_template', id=reception['id']) }}" target="_blank">
+                    <i class="fas fa-palette me-1"></i>Otvori u Canva
+                </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Javni pristup kontrole -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">
+                            <i class="fas fa-globe me-2"></i>Javni pristup za goste
+                        </h6>
+                        <small class="text-muted">
+                            {% if reception['is_public'] %}
+                                Gosti mogu pristupiti rasporedu sedenja preko javnog linka
+                            {% else %}
+                                Javni pristup je trenutno isključen
+                            {% endif %}
+                        </small>
+                    </div>
+                    <form method="POST" action="{{ url_for('toggle_public_access', id=reception['id']) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm {% if reception['is_public'] %}btn-warning{% else %}btn-success{% endif %}">
+                            {% if reception['is_public'] %}
+                                <i class="fas fa-eye-slash me-1"></i>Isključi
+                            {% else %}
+                                <i class="fas fa-eye me-1"></i>Uključi
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if reception['description'] %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>{{ reception['description'] }}
+    </div>
+{% endif %}
+
+<div class="row">
+    <!-- Stolovi -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-table me-2"></i>Stolovi</h5>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTableModal">
+                    <i class="fas fa-plus me-1"></i>Dodaj Stol
+                </button>
+            </div>
+            <div class="card-body">
+                {% if reception.tables %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Broj</th>
+                                    <th>Kapacitet</th>
+                                    <th>Zauzeto</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for table in reception.tables|sort(attribute='number') %}
+                                    <tr>
+                                        <td><strong>{{ table.number }}</strong></td>
+                                        <td>{{ table.capacity }}</td>
+                                        <td>{{ table.guests|length }}</td>
+                                        <td>
+                                            {% if table.guests|length == table.capacity %}
+                                                <span class="badge bg-success">Pun</span>
+                                            {% elif table.guests|length > 0 %}
+                                                <span class="badge bg-warning">Delimično</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Prazan</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Još nema dodanih stolova.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Gosti -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Gosti</h5>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addGuestModal">
+                    <i class="fas fa-user-plus me-1"></i>Dodaj Gosta
+                </button>
+            </div>
+            <div class="card-body">
+                {% if reception.guests %}
+                    <div class="guest-list" style="max-height: 400px; overflow-y: auto;">
+                        {% for guest in reception.guests %}
+                            <div class="guest-item d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <strong>{{ guest.name }}</strong>
+                                    {% if guest.table %}
+                                        <small class="text-success ms-2">
+                                            <i class="fas fa-table"></i> Stol {{ guest.table.number }}
+                                        </small>
+                                    {% else %}
+                                        <small class="text-warning ms-2">
+                                            <i class="fas fa-exclamation-triangle"></i> Bez stola
+                                        </small>
+                                    {% endif %}
+                                    {% if guest.phone %}
+                                        <br><small class="text-muted">{{ guest.phone }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Još nema dodanih gostiju.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za dodavanje stola -->
+<div class="modal fade" id="addTableModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-table me-2"></i>Dodaj Novi Stol</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+                            <form method="POST" action="{{ url_for('add_table', id=reception['id']) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="table_number" class="form-label">Broj stola</label>
+                        <input type="number" class="form-control" id="table_number" name="table_number" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Kapacitet</label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" value="8" min="1" max="20">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
+                    <button type="submit" class="btn btn-primary">Dodaj Stol</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za dodavanje gosta -->
+<div class="modal fade" id="addGuestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Dodaj Novog Gosta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_guest', id=reception['id']) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Ime i prezime</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Telefon (opciono)</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email (opciono)</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="table_id" class="form-label">Stol</label>
+                        <select class="form-select" id="table_id" name="table_id">
+                            <option value="">Bez stola (dodeliti kasnije)</option>
+                            {% for table in reception.tables|sort(attribute='number') %}
+                                <option value="{{ table.id }}">
+                                    Stol {{ table.number }} ({{ table.guests|length }}/{{ table.capacity }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Napomene (opciono)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
+                    <button type="submit" class="btn btn-primary">Dodaj Gosta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

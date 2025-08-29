@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Javni Link - {{ reception.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white text-center">
+                <h3><i class="fas fa-share-alt me-2"></i>Javni Link za Goste</h3>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h4 class="text-primary">{{ reception.name }}</h4>
+                    <p class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>{{ reception.date }} | 
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ reception.venue }}
+                    </p>
+                </div>
+
+                {% if reception.is_public %}
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Javni pristup je aktiviran!</strong> Gosti mogu pristupiti rasporedu sedenja.
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="publicUrl" class="form-label">
+                            <i class="fas fa-link me-1"></i>Javni link za goste:
+                        </label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="publicUrl" 
+                                   value="{{ public_url }}" 
+                                   readonly>
+                            <button class="btn btn-outline-primary" 
+                                    type="button" 
+                                    onclick="copyToClipboard()"
+                                    id="copyBtn">
+                                <i class="fas fa-copy me-1"></i>Kopiraj
+                            </button>
+                        </div>
+                        <small class="form-text text-muted">
+                            Podelite ovaj link sa gostima da mogu da vide raspored sedenja
+                        </small>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="share-option text-center p-3 border rounded">
+                                <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                                <h6>Email</h6>
+                                <a href="mailto:?subject=Raspored sedenja - {{ reception.name }}&body=Pozdrav!%0A%0AMožete videti raspored sedenja za {{ reception.name }} na sledećem linku:%0A{{ public_url }}" 
+                                   class="btn btn-sm btn-primary">
+                                    Pošalji Email
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="share-option text-center p-3 border rounded">
+                                <i class="fas fa-mobile-alt fa-2x text-success mb-2"></i>
+                                <h6>WhatsApp</h6>
+                                <a href="https://api.whatsapp.com/send?text=Raspored sedenja za {{ reception.name }}: {{ public_url }}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-success">
+                                    Podeli na WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Napomena:</strong> 
+                        <ul class="mb-0 mt-2">
+                            <li>Ovaj link će raditi samo dok je javni pristup uključen</li>
+                            <li>Gosti neće moći da menjaju raspored, već samo da ga pregledaju</li>
+                            <li>Link se može bezbedno podeliti sa svim gostima</li>
+                        </ul>
+                    </div>
+
+                    <div class="text-center">
+                        <a href="{{ public_url }}" 
+                           target="_blank" 
+                           class="btn btn-lg btn-primary me-2">
+                            <i class="fas fa-external-link-alt me-1"></i>Pregled Javne Stranice
+                        </a>
+                        <a href="{{ url_for('reception_detail', id=reception.id) }}" 
+                           class="btn btn-lg btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Nazad na Upravljanje
+                        </a>
+                    </div>
+
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-eye-slash me-2"></i>
+                        <strong>Javni pristup je isključen</strong>
+                        <p class="mb-0 mt-2">
+                            Da bi gosti mogli da pristupe rasporedu sedenja, potrebno je da uključite javni pristup 
+                            na stranici za upravljanje prijemom.
+                        </p>
+                    </div>
+
+                    <div class="text-center">
+                        <a href="{{ url_for('reception_detail', id=reception.id) }}" 
+                           class="btn btn-lg btn-primary">
+                            <i class="fas fa-arrow-left me-1"></i>Nazad na Upravljanje
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard() {
+    const urlInput = document.getElementById('publicUrl');
+    const copyBtn = document.getElementById('copyBtn');
+    
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        
+        // Change button appearance
+        copyBtn.innerHTML = '<i class="fas fa-check me-1"></i>Kopirano!';
+        copyBtn.classList.remove('btn-outline-primary');
+        copyBtn.classList.add('btn-success');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fas fa-copy me-1"></i>Kopiraj';
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-outline-primary');
+        }, 2000);
+        
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+        alert('Greška pri kopiranju. Molimo vas da ručno kopirate link.');
+    }
+}
+
+// Modern clipboard API fallback
+if (navigator.clipboard) {
+    function copyToClipboard() {
+        const urlInput = document.getElementById('publicUrl');
+        const copyBtn = document.getElementById('copyBtn');
+        
+        navigator.clipboard.writeText(urlInput.value).then(() => {
+            copyBtn.innerHTML = '<i class="fas fa-check me-1"></i>Kopirano!';
+            copyBtn.classList.remove('btn-outline-primary');
+            copyBtn.classList.add('btn-success');
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fas fa-copy me-1"></i>Kopiraj';
+                copyBtn.classList.remove('btn-success');
+                copyBtn.classList.add('btn-outline-primary');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Greška pri kopiranju. Molimo vas da ručno kopirate link.');
+        });
+    }
+}
+</script>
+{% endblock %}

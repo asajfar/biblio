@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: svecani_prijemi_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword123
+      MYSQL_DATABASE: svecani_prijemi
+      MYSQL_USER: svecani_prijemi
+      MYSQL_PASSWORD: password123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql_setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    networks:
+      - svecani_prijemi_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: svecani_prijemi_phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: svecani_prijemi
+      PMA_PASSWORD: password123
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - svecani_prijemi_network
+
+volumes:
+  mysql_data:
+
+networks:
+  svecani_prijemi_network:
+    driver: bridge

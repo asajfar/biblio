@@ -1,0 +1,16 @@
+# Core Flask zavisnosti
+Flask==3.1.2
+bcrypt==4.2.1
+Jinja2==3.1.6
+Werkzeug==3.1.3
+click==8.2.1
+itsdangerous==2.2.0
+MarkupSafe==3.0.2
+
+# Database zavisnosti
+PyMySQL==1.1.0
+mysql-connector-python==8.2.0
+
+# Image generation zavisnosti
+Pillow==10.2.0
+qrcode==7.4.2

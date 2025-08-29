@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Početna - Svečani Prijemi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto text-center">
+        <div class="hero-section py-5">
+            <h1 class="display-4 text-primary mb-4">
+                <i class="fas fa-glass-cheers"></i> Dobrodošli u Svečane Prijeme
+            </h1>
+            <p class="lead mb-4">
+                Profesionalna aplikacija za organizaciju svečanih prijema i upravljanje rasporedom mesta za goste.
+            </p>
+            
+            {% if not current_user.is_authenticated %}
+                <div class="d-grid gap-2 d-md-block">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-2">
+                        <i class="fas fa-user-plus me-2"></i>Registruj se
+                    </a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>Prijavi se
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-users fa-3x text-primary"></i>
+            </div>
+            <h4>Upravljanje Gostima</h4>
+            <p class="text-muted">Jednostavno dodavanje i organizovanje gostiju za vaš svečani prijem.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-table fa-3x text-primary"></i>
+            </div>
+            <h4>Raspored Stolova</h4>
+            <p class="text-muted">Kreirajte stolove i dodelite mesta gostima prema vašim potrebama.</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="feature-card text-center p-4">
+            <div class="feature-icon mb-3">
+                <i class="fas fa-chart-pie fa-3x text-primary"></i>
+            </div>
+            <h4>Pregled Rasporeda</h4>
+            <p class="text-muted">Jasno prikazivanje ko na kojem stolu ima mesto u vašoj sali.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

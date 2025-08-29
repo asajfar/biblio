@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspored Sedenja - {{ reception.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .public-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin: 2rem 0;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .table-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .guest-highlight {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .guest-search-result {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #28a745;
+        }
+        
+        .guest-not-found {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 1rem;
+            border-left: 4px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="public-header">
+            <h1 class="display-5 text-primary mb-3">
+                <i class="fas fa-glass-cheers me-2"></i>{{ reception.name }}
+            </h1>
+            <p class="lead mb-2">
+                <i class="fas fa-calendar me-2 text-muted"></i>{{ reception.date }}
+            </p>
+            <p class="text-muted mb-0">
+                <i class="fas fa-map-marker-alt me-2"></i>{{ reception.venue }}
+            </p>
+            {% if reception.description %}
+                <p class="mt-3 text-muted">{{ reception.description }}</p>
+            {% endif %}
+            
+            <!-- Dugme za download slike -->
+            <div class="mt-3">
+                <button onclick="downloadAsImage()" class="btn btn-light btn-sm">
+                    <i class="fas fa-download me-1"></i>Preuzmi kao Sliku
+                </button>
+            </div>
+        </div>
+
+        <!-- Guest Search -->
+        <div class="search-container">
+            <h4 class="mb-3">
+                <i class="fas fa-search me-2 text-primary"></i>Pronađite Vaše Mesto
+            </h4>
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" 
+                           id="guestSearch" 
+                           class="form-control form-control-lg" 
+                           placeholder="Ukucajte Vaše ime ili prezime..."
+                           autocomplete="off">
+                </div>
+                <div class="col-md-4">
+                    <button type="button" 
+                            id="clearSearch" 
+                            class="btn btn-outline-secondary btn-lg w-100">
+                        <i class="fas fa-times me-1"></i>Obriši
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Search Results -->
+            <div id="searchResults" class="mt-3"></div>
+        </div>
+
+        <!-- Tables Layout -->
+        <div class="row">
+            {% if tables %}
+                {% for table in tables %}
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card table-card" id="table-{{ table.number }}">
+                            <div class="card-header bg-primary text-white text-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-table me-2"></i>Stol {{ table.number }}
+                                </h5>
+                                <small>{{ table.guests|length }}/{{ table.capacity }} mesta</small>
+                            </div>
+                            <div class="card-body">
+                                {% if table.guests %}
+                                    <div class="guest-list">
+                                        {% for guest in table.guests %}
+                                            <div class="guest-item p-2 mb-2 rounded border" 
+                                                 data-guest-name="{{ guest.name|lower }}"
+                                                 data-table="{{ table.number }}">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-user me-2 text-muted"></i>
+                                                    <strong>{{ guest.name }}</strong>
+                                                </div>
+                                                {% if guest.notes %}
+                                                    <small class="text-muted ms-4">{{ guest.notes }}</small>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted text-center mb-0">
+                                        <i class="fas fa-chair me-1"></i>Slobodan stol
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Raspored stolova još nije postavljen.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Statistics -->
+        {% if tables %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card table-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Statistike Prijema</h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <h3 class="text-primary">{{ tables|length }}</h3>
+                                    <small class="text-muted">Stolova</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3 class="text-success">{{ all_guests|length }}</h3>
+                                    <small class="text-muted">Gostiju</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3 class="text-info">{{ tables|sum(attribute='capacity') }}</h3>
+                                    <small class="text-muted">Ukupno Mesta</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h3 class="text-warning">{{ all_guests|selectattr('table_number')|list|length }}</h3>
+                                    <small class="text-muted">Raspoređeno</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="text-center mt-5 mb-3">
+            <p class="text-white">
+                <small>
+                    <i class="fas fa-heart me-1"></i>
+                    Kreiranje sa ljubavlju za {{ reception.name }}
+                </small>
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Guest search functionality
+        const searchInput = document.getElementById('guestSearch');
+        const clearButton = document.getElementById('clearSearch');
+        const searchResults = document.getElementById('searchResults');
+        let allGuests = {{ all_guests|tojson }};
+
+        function highlightGuest(guestName, tableNumber) {
+            // Remove all previous highlights
+            document.querySelectorAll('.guest-highlight').forEach(el => {
+                el.classList.remove('guest-highlight');
+            });
+
+            // Find and highlight the guest
+            const guestItems = document.querySelectorAll('.guest-item');
+            guestItems.forEach(item => {
+                const itemName = item.getAttribute('data-guest-name');
+                if (itemName === guestName.toLowerCase()) {
+                    item.classList.add('guest-highlight');
+                    
+                    // Scroll to the table
+                    const table = document.getElementById(`table-${tableNumber}`);
+                    if (table) {
+                        table.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+        }
+
+        function searchGuests(query) {
+            if (!query) {
+                searchResults.innerHTML = '';
+                // Remove all highlights
+                document.querySelectorAll('.guest-highlight').forEach(el => {
+                    el.classList.remove('guest-highlight');
+                });
+                return;
+            }
+
+            const results = allGuests.filter(guest => 
+                guest.name.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (results.length > 0) {
+                let html = '<div class="search-results">';
+                results.forEach(guest => {
+                    html += `
+                        <div class="guest-search-result" onclick="highlightGuest('${guest.name}', ${guest.table_number || 'null'})">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${guest.name}</strong>
+                                    ${guest.table_number ? 
+                                        `<br><small class="text-success"><i class="fas fa-table me-1"></i>Stol ${guest.table_number}</small>` : 
+                                        '<br><small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Bez dodeljenog stola</small>'
+                                    }
+                                </div>
+                                <i class="fas fa-arrow-right text-primary"></i>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                searchResults.innerHTML = html;
+            } else {
+                searchResults.innerHTML = `
+                    <div class="guest-not-found">
+                        <div class="text-center">
+                            <i class="fas fa-search me-2"></i>
+                            <strong>Gost nije pronađen</strong>
+                            <br><small class="text-muted">Pokušajte sa drugim imenom ili kontaktirajte organizatore</small>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        searchInput.addEventListener('input', function() {
+            searchGuests(this.value);
+        });
+
+        clearButton.addEventListener('click', function() {
+            searchInput.value = '';
+            searchGuests('');
+        });
+
+        // Add some animations on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.table-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.5s ease';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        });
+
+        // Download page as image functionality
+        function downloadAsImage() {
+            // Import html2canvas library
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                script.onload = function() {
+                    captureAndDownload();
+                };
+                document.head.appendChild(script);
+            } else {
+                captureAndDownload();
+            }
+        }
+
+        function captureAndDownload() {
+            const button = document.querySelector('button[onclick="downloadAsImage()"]');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generisanje...';
+            button.disabled = true;
+
+            // Hide search results temporarily
+            const searchResults = document.getElementById('searchResults');
+            const originalDisplay = searchResults.style.display;
+            searchResults.style.display = 'none';
+
+            html2canvas(document.body, {
+                backgroundColor: null,
+                scale: 1,
+                logging: false,
+                allowTaint: false,
+                useCORS: true
+            }).then(function(canvas) {
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `raspored_sedenja_{{ reception.name|replace(' ', '_') }}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                // Restore button
+                button.innerHTML = '<i class="fas fa-download me-1"></i>Preuzmi kao Sliku';
+                button.disabled = false;
+
+                // Restore search results
+                searchResults.style.display = originalDisplay;
+            }).catch(function(error) {
+                console.error('Error generating image:', error);
+                alert('Greška pri generisanju slike. Molimo vas pokušajte ponovo.');
+                
+                // Restore button
+                button.innerHTML = '<i class="fas fa-download me-1"></i>Preuzmi kao Sliku';
+                button.disabled = false;
+
+                // Restore search results
+                searchResults.style.display = originalDisplay;
+            });
+        }
+    </script>
+</body>
+</html>
